@@ -1,0 +1,34 @@
+'use client'
+
+import { useEffect, useState } from "react";
+
+export default function page() {
+  //Used to store data from key: "data"
+  const [value, setValue] = useState({
+    "temperature": 0,
+  })
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  // Fetch data from API
+  const fetchData = async () => {
+    const res = await fetch("http://192.168.30.10:8000/sensor_data/fetch_last?measurement=phuphaman&device=device_01")
+    const resData = await res.json()
+    // Show information on console
+    console.log("This value default : ", resData)
+
+    // Access data inside key : "data"
+    setValue(resData.data)
+    // Shaow data from key: "data" at console
+    console.log("This value form resData.data : ", resData.data)
+  }
+
+  return (
+    <>
+      <h1>Sensor Data</h1>
+      <h3>temperature : {value.temperature} °C</h3>
+    </>
+  )
+}
