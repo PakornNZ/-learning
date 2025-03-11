@@ -8,9 +8,12 @@ export default function page() {
     fetchData()
   }, [])
 
+  // Fetch data from API
   const fetchData = async () => {
     const res = await fetch("http://192.168.30.10:8000/sensor_data/fetch_last?measurement=phuphaman&device=device_01")
     const resData = await res.json()
+
+    // Show information on console
     console.log(resData)
   }
 
