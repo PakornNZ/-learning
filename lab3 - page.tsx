@@ -21,13 +21,14 @@ export default function page() {
 
     // Access data inside key : "data"
     setValue(resData.data)
-    // Shaow data from key: "data" at console
+    // Show data from key: "data" at console
     console.log("This value form resData.data : ", resData.data)
   }
 
   return (
     <>
       <h1>Sensor Data</h1>
+      {/* Show sensor */}
       <h3>temperature : {value.temperature} °C</h3>
     </>
   )
