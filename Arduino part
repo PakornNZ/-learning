@@ -1,0 +1,119 @@
+#include "DHT.h"
+#include <WiFiManager.h>
+#include <ArduinoJson.h>
+#include <PubSubClient.h>
+
+
+// MQTT Broker Setting
+const char* mqtt_server = "service.eng.rmuti.ac.th";
+const int mqtt_port = 1883;
+const char* mqtt_topic = "sensor/data";      // Topic to publish data
+
+// Variables for managing time intervals
+unsigned long lastTime = 0;
+unsigned long timeDelay = 5000;
+
+// Variables for storing temperature and humidity data
+float temperature, humidity;
+
+// DHT22 sensor settings
+#define DHTPIN 14         // Pin where DHT22 is connected
+#define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+
+// WiFi Reset Button
+#define SW_RETSET_WiFi 27
+
+WiFiManager WM;
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+
+// Function to reconnect to MQTT Broker
+void reconnect_mqtt() {
+  while (!client.connected()) {
+    Serial.print("Connecting to MQTT...");
+
+    // Connection to MQTT Broker
+    if (client.connect("", "csb", "csb_pass")) {
+      Serial.println("Connected to MQTT!");
+    } else {
+      Serial.print("Failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" Trying again in 5 seconds...");
+      delay(5000);
+    }
+  }
+}
+
+// Function to reset WiFi settings if the reset button is pressed
+void reset_wifimanager(){
+  if(digitalRead(SW_RETSET_WiFi) == LOW){
+    Serial.println("WiFi Reset? Ple. waiting 5s.");
+    delay(5000);
+    if(digitalRead(SW_RETSET_WiFi) == LOW){
+      delay(10);
+      while(digitalRead(SW_RETSET_WiFi) == LOW){
+        delay(10);
+        WM.resetSettings();
+      }
+      Serial.println("WiFi Resrt Setting .. Ok");
+      WM.resetSettings();  
+    }
+    ESP.restart();
+  } 
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // Connect to WiFi using WiFiManager
+  WM.autoConnect("Sky_wifi");
+  
+  // Added WiFi reset button setting to input with pull-up resistor.
+  //
+  
+  dht.begin();
+  client.setServer(mqtt_server, mqtt_port);
+}
+
+void loop() {
+  // Added call to reset wifimanager function
+  //
+
+  if (!client.connected()) {
+    reconnect_mqtt();
+  }
+  client.loop();
+
+  // Read temperature and humidity from DHT22 sensor
+  temperature = dht.readTemperature();
+  humidity = dht.readHumidity();
+
+  // Check for invalid data
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.print("Failed to read data.");
+  } else {
+    Serial.print("Temperature: ");
+    Serial.print(temperature);
+    Serial.println(" C");
+
+    Serial.print("Humidity: ");
+    Serial.print(humidity);
+    Serial.println(" %");
+
+    // build JSON Payload
+    StaticJsonDocument<200> jsonDoc;
+    jsonDoc["temperature"] = temperature;
+    jsonDoc["humidity"] = humidity;
+
+    // Convert JSON to character buffer
+    char jsonBuffer[256];
+    serializeJson(jsonDoc, jsonBuffer);
+
+    // Publish JSON data to MQTT topic
+    client.publish(mqtt_topic, jsonBuffer);
+    Serial.println("JSON data sent to MQTT!");
+  }
+  delay(5000);
+}
