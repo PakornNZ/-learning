@@ -1,5 +1,4 @@
 #include "DHT.h"
-#include <WiFiManager.h>
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 
@@ -24,7 +23,6 @@ DHT dht(DHTPIN, DHTTYPE);
 // WiFi Reset Button
 #define SW_RETSET_WiFi 27
 
-WiFiManager WM;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -68,7 +66,7 @@ void setup() {
   Serial.begin(115200);
 
   // Connect to WiFi using WiFiManager
-  WM.autoConnect("Sky_wifi");
+  //
   
   // Added WiFi reset button setting to input with pull-up resistor.
   //
